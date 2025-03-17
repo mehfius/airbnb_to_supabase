@@ -5,4 +5,6 @@ export interface PropertyData {
   label: string;
   date_range: string;
   host_name: string;
+  special_offer: string | null;
+  checked_url: string;
 } 

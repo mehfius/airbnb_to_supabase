@@ -16,13 +16,16 @@ export async function scrape_prices(urls: string[], concurrency = 7): Promise<Pr
     const page = await browser.newPage();
     
     for (const url of urls) {
+      const room_id = new URL(url).pathname.split('/').pop() || 'unknown';
       const result = {
         url,
         price: 'N/A',
         fee: 'N/A',
         label: 'Unknown Property',
         date_range: 'Unknown',
-        host_name: 'Unknown Host'
+        host_name: 'Unknown Host',
+        special_offer: null as string | null,
+        checked_url: url
       };
 
       try {
@@ -32,13 +35,13 @@ export async function scrape_prices(urls: string[], concurrency = 7): Promise<Pr
         let error_message = '';
         
         // Extract property details with error handling
-        result.label = await page.$eval('section h2.hpipapi', (el) => el.textContent?.trim() || 'Unknown Property')
+        result.label = await page.$eval(SELECTOR.LABEL, (el) => el.textContent?.trim() || 'Unknown Property')
           .catch(() => {
             error_message += 'Label not found. ';
             return 'Unknown Property';
           });
         
-        result.host_name = await page.$eval('div.to1hkqq div.t1pxe1a4', (el) => {
+        result.host_name = await page.$eval(SELECTOR.HOST_NAME, (el) => {
           const text = el.textContent?.trim() || '';
           return text.replace('Anfitriã(o):', '').trim();
         }).catch(() => {
@@ -51,8 +54,8 @@ export async function scrape_prices(urls: string[], concurrency = 7): Promise<Pr
         
         try {
           await Promise.race([
-            page.waitForSelector(SELECTOR.PRICE, { timeout: 10000 }),
-            page.waitForSelector('div#bookItTripDetailsError', { timeout: 10000 })
+            page.waitForSelector(SELECTOR.PRICE, { timeout: 2000 }),
+            page.waitForSelector('div#bookItTripDetailsError', { timeout: 2000 })
           ]);
           
           const price_element = await page.$(SELECTOR.PRICE);
@@ -68,8 +71,17 @@ export async function scrape_prices(urls: string[], concurrency = 7): Promise<Pr
               .catch(() => 'N/A');
             result.fee = await page.$eval(SELECTOR.FEE, (el) => el.textContent?.trim() || 'N/A')
               .catch(() => 'N/A');
+            
+            // Check for special offer
+            try {
+              result.special_offer = await page.$eval(SELECTOR.SPECIAL_OFFER, (el) => el.textContent?.trim() || null)
+                .catch(() => null);
+            } catch {
+              result.special_offer = null;
+            }
+            
             if (result.price !== 'N/A') {
-              console.log(`✅ ${check_in}: Price: ${result.price}, Fee: ${result.fee}`);
+              console.log(`✅ Room ${room_id} - ${check_in}: Price: ${result.price}, Fee: ${result.fee}, Special Offer: ${result.special_offer || 'None'}`);
               results.push(result);
             } else {
               error_message += 'Price not found. ';
@@ -85,10 +97,10 @@ export async function scrape_prices(urls: string[], concurrency = 7): Promise<Pr
         
         // Show consolidated error message if any errors occurred
         if (error_message) {
-          console.warn(`⚠️ ${check_in}: ${error_message.trim()}`);
+          console.warn(`⚠️ Room ${room_id} - ${check_in}: ${error_message.trim()}`);
         }
       } catch (error) {
-        console.warn(`⚠️ ${new URL(url).searchParams.get('check_in') || 'Unknown Date'}: Page load failed`);
+        console.warn(`⚠️ Room ${room_id} - ${new URL(url).searchParams.get('check_in') || 'Unknown Date'}: Page load failed`);
         result.price = 'Error loading page';
       }
       
@@ -107,13 +119,16 @@ export async function scrape_prices(urls: string[], concurrency = 7): Promise<Pr
       const context = await browser.createBrowserContext();
       const page = await context.newPage();
 
+      const room_id = new URL(url).pathname.split('/').pop() || 'unknown';
       const result = {
         url,
         price: 'N/A',
         fee: 'N/A',
         label: 'Unknown Property',
         date_range: 'Unknown',
-        host_name: 'Unknown Host'
+        host_name: 'Unknown Host',
+        special_offer: null as string | null,
+        checked_url: url
       };
 
       try {
@@ -123,13 +138,13 @@ export async function scrape_prices(urls: string[], concurrency = 7): Promise<Pr
         let error_message = '';
         
         // Extract property details with error handling
-        result.label = await page.$eval('section h2.hpipapi', (el) => el.textContent?.trim() || 'Unknown Property')
+        result.label = await page.$eval(SELECTOR.LABEL, (el) => el.textContent?.trim() || 'Unknown Property')
           .catch(() => {
             error_message += 'Label not found. ';
             return 'Unknown Property';
           });
         
-        result.host_name = await page.$eval('div.to1hkqq div.t1pxe1a4', (el) => {
+        result.host_name = await page.$eval(SELECTOR.HOST_NAME, (el) => {
           const text = el.textContent?.trim() || '';
           return text.replace('Anfitriã(o):', '').trim();
         }).catch(() => {
@@ -142,8 +157,8 @@ export async function scrape_prices(urls: string[], concurrency = 7): Promise<Pr
         
         try {
           await Promise.race([
-            page.waitForSelector(SELECTOR.PRICE, { timeout: 10000 }),
-            page.waitForSelector('div#bookItTripDetailsError', { timeout: 10000 })
+            page.waitForSelector(SELECTOR.PRICE, { timeout: 2000 }),
+            page.waitForSelector('div#bookItTripDetailsError', { timeout: 2000 })
           ]);
           
           const price_element = await page.$(SELECTOR.PRICE);
@@ -159,8 +174,17 @@ export async function scrape_prices(urls: string[], concurrency = 7): Promise<Pr
               .catch(() => 'N/A');
             result.fee = await page.$eval(SELECTOR.FEE, (el) => el.textContent?.trim() || 'N/A')
               .catch(() => 'N/A');
+            
+            // Check for special offer
+            try {
+              result.special_offer = await page.$eval(SELECTOR.SPECIAL_OFFER, (el) => el.textContent?.trim() || null)
+                .catch(() => null);
+            } catch {
+              result.special_offer = null;
+            }
+            
             if (result.price !== 'N/A') {
-              console.log(`✅ ${check_in}: Price: ${result.price}, Fee: ${result.fee}`);
+              console.log(`✅ Room ${room_id} - ${check_in}: Price: ${result.price}, Fee: ${result.fee}, Special Offer: ${result.special_offer || 'None'}`);
               results.push(result);
             } else {
               error_message += 'Price not found. ';
@@ -176,10 +200,10 @@ export async function scrape_prices(urls: string[], concurrency = 7): Promise<Pr
         
         // Show consolidated error message if any errors occurred
         if (error_message) {
-          console.warn(`⚠️ ${check_in}: ${error_message.trim()}`);
+          console.warn(`⚠️ Room ${room_id} - ${check_in}: ${error_message.trim()}`);
         }
       } catch (error) {
-        console.warn(`⚠️ ${new URL(url).searchParams.get('check_in') || 'Unknown Date'}: Page load failed`);
+        console.warn(`⚠️ Room ${room_id} - ${new URL(url).searchParams.get('check_in') || 'Unknown Date'}: Page load failed`);
         result.price = 'Error loading page';
       } finally {
         await page.close();
