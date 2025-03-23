@@ -1,10 +1,10 @@
 export interface PropertyData {
   url: string;
-  price: string;
-  fee: string;
+  price: number | null;
   label: string;
   date_range: string;
   host_name: string;
-  special_offer: string | null;
-  checked_url: string;
+  room_id: string;
+  total: number | null;
+  error?: string;
 } 
