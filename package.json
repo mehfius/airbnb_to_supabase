@@ -1,5 +1,5 @@
 {
-  "name": "airbnb_scraper",
+  "name": "monibnb",
   "version": "1.0.0",
   "description": "A web scraper for Airbnb property prices with Supabase integration",
   "main": "dist/index.js",
@@ -13,7 +13,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/yourusername/airbnb_scraper.git"
+    "url": "git+https://github.com/mehfiu/monibnb.git"
   },
   "keywords": [
     "airbnb",
@@ -24,9 +24,9 @@
   "author": "Your Name <your.email@example.com>",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/yourusername/airbnb_scraper/issues"
+    "url": "https://github.com/mehfiu/monibnb/issues"
   },
-  "homepage": "https://github.com/yourusername/airbnb_scraper#readme",
+  "homepage": "https://github.com/mehfiu/monibnb#readme",
   "dependencies": {
     "@supabase/supabase-js": "^2.39.8",
     "cors": "^2.8.5",
