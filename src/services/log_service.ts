@@ -12,7 +12,8 @@ export const log_service = {
     error_messages: string[] | null,
     failed_room_ids: string[] | null,
     failed_count: number,
-    successful_count: number
+    successful_count: number,
+    html_sidebar: string[] | null
   }): Promise<void> {
     try {
       const { error } = await this.client
@@ -30,7 +31,8 @@ export const log_service = {
     execution_time: string,
     error_messages: string[],
     failed_room_ids: string[],
-    successful_count: number
+    successful_count: number,
+    html_sidebar: string[] | null
   ) {
     const failed_count = failed_room_ids.length;
     
@@ -40,7 +42,8 @@ export const log_service = {
       error_messages: error_messages.length > 0 ? error_messages : null,
       failed_room_ids: failed_room_ids.length > 0 ? failed_room_ids : null,
       failed_count,
-      successful_count
+      successful_count,
+      html_sidebar
     };
   }
 }; 

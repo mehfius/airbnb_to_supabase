@@ -4,7 +4,7 @@ import { PropertyData } from '../types/types';
 
 export async function scrape_prices(urls: string[]): Promise<PropertyData[]> {
   const browser = await puppeteer.launch({
-    headless: false,
+    headless: true,
     args: ['--no-sandbox', '--disable-setuid-sandbox'],
     defaultViewport: null
   });
@@ -22,7 +22,8 @@ export async function scrape_prices(urls: string[]): Promise<PropertyData[]> {
       host_name: 'Unknown Host',
       room_id: new URL(url).pathname.split('/').pop() || 'unknown',
       total: null as number | null,
-      error: undefined as string | undefined
+      error: undefined as string | undefined,
+      html_sidebar: '' as string
     };
 
     try {
@@ -55,8 +56,8 @@ export async function scrape_prices(urls: string[]): Promise<PropertyData[]> {
       
       try {
         await Promise.race([
-          page.waitForSelector(SELECTOR.PRICE, { timeout: 12000 }),
-          page.waitForSelector(SELECTOR.UNAVAILABLE_DATES, { timeout: 12000 })
+          page.waitForSelector(SELECTOR.PRICE, { timeout: 2000 }),
+          page.waitForSelector(SELECTOR.UNAVAILABLE_DATES, { timeout: 2000 })
         ]);
         
         const price_element = await page.$(SELECTOR.PRICE);
@@ -76,11 +77,6 @@ export async function scrape_prices(urls: string[]): Promise<PropertyData[]> {
             console.log(`\x1b]8;;${url}\x1b\\[Link]\x1b]8;;\x1b\\ ✅ ${check_in}: Price: ${result.price} - Room ${room_id}`);
           } else {
             error_message += 'Price not found. ';
-            const book_it_sidebar = await page.$(SELECTOR.BOOK_IT_SIDEBAR);
-            if (book_it_sidebar) {
-              const sidebar_content = await page.$eval(SELECTOR.BOOK_IT_SIDEBAR, (el) => el.innerHTML);
-              console.log('BOOK_IT_SIDEBAR content:', sidebar_content);
-            }
           }
 
           // Update total extraction
@@ -100,15 +96,29 @@ export async function scrape_prices(urls: string[]): Promise<PropertyData[]> {
       // Show consolidated error message if any errors occurred
       if (error_message) {
         console.warn(`\x1b]8;;${url}\x1b\\[Link]\x1b]8;;\x1b\\ ⚠️  ${check_in}: ${error_message.trim()} - Room ${room_id}`);
+        const book_it_sidebar = await page.$(SELECTOR.BOOK_IT_SIDEBAR);
+        if (book_it_sidebar) {
+          const sidebar_content = await page.$eval(SELECTOR.BOOK_IT_SIDEBAR, (el) => el.innerHTML);
+          result.html_sidebar = sidebar_content;
+          const has_dollar = sidebar_content.includes('R$') ? '✅' : '❌';
+          console.log(`Room ${room_id}: Found $ in BOOK_IT_SIDEBAR: ${has_dollar}`);
+        }
       }
     } catch (error) {
-      
       console.warn(`\x1b]8;;${url}\x1b\\[Link]\x1b]8;;\x1b\\ ⚠️  ${new Date().toISOString()}: Navigation failed - Room ${room_id}`);
       result.price = null;
       if (error instanceof Error) {
         result.error = error.message;
       } else {
         result.error = 'Unknown error occurred';
+      }
+      
+      const book_it_sidebar = await page.$(SELECTOR.BOOK_IT_SIDEBAR);
+      if (book_it_sidebar) {
+        const sidebar_content = await page.$eval(SELECTOR.BOOK_IT_SIDEBAR, (el) => el.innerHTML);
+        result.html_sidebar = sidebar_content;
+        const has_dollar = sidebar_content.includes('$') ? '✅' : '❌';
+        console.log(`Room ${room_id}: Found $ in BOOK_IT_SIDEBAR: ${has_dollar}`);
       }
     }
     

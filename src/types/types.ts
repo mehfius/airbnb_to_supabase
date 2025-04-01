@@ -7,4 +7,5 @@ export interface PropertyData {
   room_id: string;
   total: number | null;
   error?: string;
+  html_sidebar?: string;
 } 

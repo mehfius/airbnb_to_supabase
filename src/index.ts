@@ -54,7 +54,8 @@ const supabase_service = {
     error_messages: string[] | null,
     failed_room_ids: string[] | null,
     failed_count: number,
-    successful_count: number
+    successful_count: number,
+    html_sidebar: string[] | null
   }): Promise<void> {
     try {
       const { error } = await this.client
@@ -87,6 +88,7 @@ async function main() {
   let room_ids: string[] = [];
   const error_messages: string[] = [];
   const failed_room_ids: string[] = [];
+  const html_sidebar: string[] = [];
   let successful_count = 0;
 
   try {
@@ -114,6 +116,9 @@ async function main() {
         failed_room_ids.push(p.room_id);
         const error_msg = p.error || 'Price not found';
         error_messages.push(`Room ${p.room_id}: ${error_msg}`);
+        if (p.html_sidebar) {
+          html_sidebar.push(p.html_sidebar);
+        }
       } else {
         successful_count++;
       }
@@ -149,15 +154,9 @@ async function main() {
       error_messages: error_messages.length > 0 ? error_messages : null,
       failed_room_ids: failed_room_ids.length > 0 ? failed_room_ids : null,
       failed_count,
-      successful_count
+      successful_count,
+      html_sidebar: html_sidebar.length > 0 ? html_sidebar : null
     };
-
-    // Print the query
-    console.log('Inserting log with query:');
-    console.log(JSON.stringify({
-      table: 'logs',
-      data: log_data
-    }, null, 2));
 
     // Insert log
     await supabase_service.log_execution(log_data);
