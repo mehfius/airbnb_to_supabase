@@ -1,7 +1,6 @@
 import { scrape_prices } from './services/scraper_service';
 import { addDays, format } from 'date-fns';
 import { createClient } from '@supabase/supabase-js';
-import { log_service } from './services/log_service';
 
 // Supabase Service
 const supabase_service = {
@@ -28,7 +27,12 @@ const supabase_service = {
     }
   },
 
-  async upsert_prices(prices: { price: number | null; room_id: string; total: number | null; date_range: string }[]): Promise<void> {
+  async upsert_prices(prices: { 
+    price: number | null; 
+    room_id: string; 
+    total: number | null; 
+    date_range: string 
+  }[]): Promise<void> {
     try {
       const { error } = await this.client
         .from('prices')
@@ -87,8 +91,7 @@ async function main() {
 
   try {
     const start_date = new Date();
-    const days = 3;
-    const concurrency = 1;
+    const days = 7;
 
     console.log('Fetching room ids from Supabase...');
     room_ids = await supabase_service.get_room_ids();
@@ -103,7 +106,7 @@ async function main() {
     const property_urls = generate_urls(room_ids, start_date, days);
 
     console.log('Scraping prices...');
-    const prices = await scrape_prices(property_urls, concurrency);
+    const prices = await scrape_prices(property_urls);
 
     // Track failed room_ids and error messages
     prices.forEach(p => {
@@ -136,14 +139,18 @@ async function main() {
   } finally {
     const execution_time = `${((Date.now() - start_time) / 1000).toFixed(2)} seconds`;
     
-    // Prepare and log execution data
-    const log_data = await log_service.prepare_log_data(
+    // Calculate failed count
+    const failed_count = failed_room_ids.length;
+
+    // Prepare log data
+    const log_data = {
       room_ids,
       execution_time,
-      error_messages,
-      failed_room_ids,
+      error_messages: error_messages.length > 0 ? error_messages : null,
+      failed_room_ids: failed_room_ids.length > 0 ? failed_room_ids : null,
+      failed_count,
       successful_count
-    );
+    };
 
     // Print the query
     console.log('Inserting log with query:');
@@ -153,7 +160,7 @@ async function main() {
     }, null, 2));
 
     // Insert log
-    await log_service.log_execution(log_data);
+    await supabase_service.log_execution(log_data);
   }
 }
 

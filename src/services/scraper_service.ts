@@ -2,7 +2,7 @@ import puppeteer from 'puppeteer';
 import { SELECTOR } from '../config/constants';
 import { PropertyData } from '../types/types';
 
-export async function scrape_prices(urls: string[], concurrency = 7): Promise<PropertyData[]> {
+export async function scrape_prices(urls: string[]): Promise<PropertyData[]> {
   const browser = await puppeteer.launch({
     headless: false,
     args: ['--no-sandbox', '--disable-setuid-sandbox'],
@@ -55,8 +55,8 @@ export async function scrape_prices(urls: string[], concurrency = 7): Promise<Pr
       
       try {
         await Promise.race([
-          page.waitForSelector(SELECTOR.PRICE, { timeout: 2000 }),
-          page.waitForSelector(SELECTOR.UNAVAILABLE_DATES, { timeout: 2000 })
+          page.waitForSelector(SELECTOR.PRICE, { timeout: 12000 }),
+          page.waitForSelector(SELECTOR.UNAVAILABLE_DATES, { timeout: 12000 })
         ]);
         
         const price_element = await page.$(SELECTOR.PRICE);
@@ -76,6 +76,11 @@ export async function scrape_prices(urls: string[], concurrency = 7): Promise<Pr
             console.log(`\x1b]8;;${url}\x1b\\[Link]\x1b]8;;\x1b\\ ✅ ${check_in}: Price: ${result.price} - Room ${room_id}`);
           } else {
             error_message += 'Price not found. ';
+            const book_it_sidebar = await page.$(SELECTOR.BOOK_IT_SIDEBAR);
+            if (book_it_sidebar) {
+              const sidebar_content = await page.$eval(SELECTOR.BOOK_IT_SIDEBAR, (el) => el.innerHTML);
+              console.log('BOOK_IT_SIDEBAR content:', sidebar_content);
+            }
           }
 
           // Update total extraction
@@ -97,6 +102,7 @@ export async function scrape_prices(urls: string[], concurrency = 7): Promise<Pr
         console.warn(`\x1b]8;;${url}\x1b\\[Link]\x1b]8;;\x1b\\ ⚠️  ${check_in}: ${error_message.trim()} - Room ${room_id}`);
       }
     } catch (error) {
+      
       console.warn(`\x1b]8;;${url}\x1b\\[Link]\x1b]8;;\x1b\\ ⚠️  ${new Date().toISOString()}: Navigation failed - Room ${room_id}`);
       result.price = null;
       if (error instanceof Error) {
